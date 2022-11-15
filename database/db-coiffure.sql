@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 18-10-2022 a las 00:30:58
+-- Tiempo de generación: 15-11-2022 a las 19:35:17
 -- Versión del servidor: 10.4.24-MariaDB
 -- Versión de PHP: 8.1.6
 
@@ -38,7 +38,10 @@ CREATE TABLE `categorias` (
 
 INSERT INTO `categorias` (`id_categoria`, `nombre`) VALUES
 (3, 'Maquinas Inalámbricas'),
-(6, 'Tijeras Profesionales');
+(7, 'Afeitadoras'),
+(10, 'Maquinas con Cable'),
+(20, 'Tijeras'),
+(22, 'Peines');
 
 -- --------------------------------------------------------
 
@@ -59,8 +62,14 @@ CREATE TABLE `productos` (
 --
 
 INSERT INTO `productos` (`id_producto`, `marca`, `modelo`, `precio`, `id_categoria`) VALUES
-(9, 'Phillips', 'Gold', 13500, 3),
-(11, 'Wahl', 'Microdentada', 5700, 6);
+(14, 'Vanta', 'Premium Label', 12990, 7),
+(16, 'Andis', 'ProFoil Plus', 34000, 7),
+(17, 'Andis', 'T-Outliner G-1', 28900, 10),
+(19, 'Wahl', 'Magic Clip', 25600, 10),
+(28, 'BaBylissPRO', 'Foilfx01', 19990, 3),
+(30, 'Wahl', 'Máquina de Corte Legend', 199901, 3),
+(52, 'Phillips', 'Microdentado', 580, 22),
+(54, 'Wahl', 'Profesional Cut', 3500, 20);
 
 -- --------------------------------------------------------
 
@@ -81,8 +90,7 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id_usuario`, `nombre`, `email`, `contraseña`, `rol`) VALUES
-(1, 'Benjamín', 'benjaminnieto98@gmail.com', '$2y$10$7GNSUrkft906yANkRqq4t.4EIXZ36w3y/PY4uS4OT2OFbqajWKDlm', 2),
-(4, 'Juan', 'juan@gmail.com', '$2y$10$Cw2mIUtJPR2r9im7FzgoYeVO12HLkh9gK/C3QeFGQ.KvHRFFBP2TG', 1);
+(1, 'Benjamín', 'benjaminnieto98@gmail.com', '$2y$10$7GNSUrkft906yANkRqq4t.4EIXZ36w3y/PY4uS4OT2OFbqajWKDlm', 2);
 
 --
 -- Índices para tablas volcadas
@@ -115,13 +123,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `categorias`
 --
 ALTER TABLE `categorias`
-  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+  MODIFY `id_categoria` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT de la tabla `productos`
 --
 ALTER TABLE `productos`
-  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id_producto` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=56;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`

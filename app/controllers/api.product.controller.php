@@ -1,6 +1,6 @@
 <?php
 require_once './app/models/ProductModel.php';
-require_once './app/view/api.view.php';
+require_once './app/views/api.view.php';
 require_once './app/helpers/auth-api.helper.php';
 
 class ApiProductController
@@ -24,72 +24,137 @@ class ApiProductController
         return json_decode($this->data);
     }
 
-    public function getAll($params = null)
-    {
-        $products = $this->model->getAll();
-        $this->view->response($products);
-    }
-
     public function get($params = null)
     {
-        $id = $params[':ID'];
-        $product = $this->model->get($id);
-        if ($product)
-            $this->view->response($product);
-        else
-            $this->view->response("Product id= $id not found", 404);
+        if ($params != null) {
+            $id = $params[':ID']; // Si vienen parametros, llama al modelo y busca por id
+            $product = $this->model->get($id);
+            if ($product) {
+                return $product = $this->view->response($product, 200);
+            } else {
+                $this->view->response("Product id= $id not found", 404);
+            }
+        } else { // no viene un parámetro :ID, entonces obtiene la coleccion entera
+            // Ordenado
+            $orderBy = $_GET['orderBy'] ?? "id_producto";
+            $orderMode = $_GET['orderMode'] ?? "asc";
+            // Paginado
+            $page = (int)($_GET['page'] ?? 1);
+            $elements = (int)($_GET['elements'] ?? 5);
+            // Filtrado
+            $filterBy = $_GET['filterBy'] ?? null;
+            $equalTo = $_GET['equalTo'] ?? null;
+
+            $columns = $this->getHeaderColumns(); //Obtiene los nombres de las columnas de la tabla productos.
+            if (($orderBy == 'categoria' || in_array(strtolower($orderBy), $columns)) && (strtolower($orderMode == "asc") || strtolower($orderMode == "desc"))) { // Verifica si los parámetros de ordenado son válidos
+                if ($orderBy == 'categoria') {  //Asigna un valor $order para pasar al modelo en funcion del campo por el que se quiere ordenar
+                    $order = 'categorias.categoria';
+                } else {
+                    $order = 'productos.' . $orderBy;
+                }
+                if ((is_numeric($page) && $page > 0) && (is_numeric($elements) && $elements > 0)) {  // Verifica si los parámetros de paginado son válidos
+                    $startAt = ($page * $elements) - $elements; //Calcula cuál es el primer elemento a mostrar del paginado y lo almacena en $startAt
+                    if ($filterBy != null && $equalTo != null) { // Verifica si existen los parámetros de filtrado
+                        if ($filterBy == 'categoria' || in_array(strtolower($filterBy), $columns)) { //Verifica que el campo $filterBy exista en la tabla (comparando con $columns)
+                            if ($filterBy == 'categoria') { //Asigna un valor $filter para pasar al modelo en funcion del campo por el que se quiere ordenar
+                                $filter = 'categorias.nombre';
+                            } else {
+                                $filter = 'productos.' . $filterBy;
+                            }
+                            $result = $this->model->getAllWithFilter($order, $orderMode, $elements, $startAt, $filter, $equalTo); //Obtiene todos los productos del modelo y pasa los parametros de ordenamiento, paginado y filtrado.
+                            if (isset($result)) {   //Verifica si la consulta se realizó correctamente
+                                if (empty($result)) { //Verifica si el resultado de la consulta está vacío.
+                                    $this->view->response("The query performed did not return any results.", 204);
+                                } else {
+                                    $this->view->response($result, 200); //Envía el/los producto/s a la vista para ser mostrado/s.
+                                }
+                            } else {
+                                $result = $this->view->response("The specified query could not be performed.", 500); //Informa error interno de servidor
+                            }
+                        } else {
+                            $result = $this->view->response("Invalid filter parameter.", 400); //Informa error de parámetro no válido
+                        }
+                    } else {
+                        $result = $this->model->getAll($order, $orderMode, $elements, $startAt); //Obtiene todos los productos del modelo y pasa los parametros de ordenamiento y paginado.
+                        $this->view->response($result, 200);
+                    }
+                } else {
+                    $result = $this->view->response("Invalid paging parameter.", 400); //Informa error de parámetro no válido
+                }
+            } else if ($orderBy == '') { //Si no se le agrega ningun parametro, obtiene todos los productos.
+                $result = $this->model->getAll("id_producto", $orderMode, $elements, 0);
+                $this->view->response($result, 200);
+            } else {
+                $result = $this->view->response("Invalid sort parameter", 400); //Informa error de parámetro no válido
+            }
+        }
     }
 
-    public function remove($params = null)
+
+    //Método que devuelve un arreglo con los nombres de las columnas de una tabla
+    function getHeaderColumns($params = null)
     {
-        $id = $params[':ID'];
-
-        if (!$this->authHelper->isLoggedIn()) {
-            $this->view->response("You are not logged in", 401);
-            return;
+        $columns = []; //Se define un arreglo vacío para almacenar los nombres de las columnas.
+        $result = $this->model->getColumns(); // Obtiene toda la información de las columnas de la tabla. Devuelve un arreglo de objetos con toda la info
+        foreach ($result as $column) { //Recorre el arreglo y por cada elemento, extrae el nombre de la columna y lo agrega al arreglo $columns.
+            array_push($columns, $column->Field);
         }
-
-        $product = $this->model->get($id);
-        if ($product) {
-            $product = $this->model->delete($id);
-            $this->view->response("Product id= $id remove successfully");
-        } else {
-            $this->view->response("Product id= $id not found", 404);
-        }
+        return $columns;
     }
 
     public function insert($params = null)
     {
-        $product = $this->getData();
-        if (empty($product->marca) || empty($product->modelo) || empty($product->precio) || empty($product->id_categoria)) {
+        $body = $this->getData();
+        if (
+            empty($body->marca) ||
+            empty($body->modelo) ||
+            empty($body->precio) ||
+            empty($body->id_categoria)
+        ) {
             $this->view->response("Complete all the fields", 400);
         } else {
-            $body = $this->getData();
-            $marca = $body->marca;
-            $modelo = $body->modelo;
-            $precio = $body->precio;
-            $id_categoria = $body->id_categoria;
-            $product = $this->model->insert($marca, $modelo, $precio, $id_categoria);
-            $this->view->response("Product created successfully ", 201);
+            $id = $this->model->insert($body);
+            $product = $this->model->get($id);
+            $this->view->response($product, 201);
         }
     }
 
-
-
     public function update($params = null)
     {
-        $id = $params[':ID'];
-        $product = $this->model->get($id);
-        if ($product) {
-            $body = $this->getData();
-            $marca = $body->marca;
-            $modelo = $body->modelo;
-            $precio = $body->precio;
-            $id_categoria = $body->id_categoria;
-            $product = $this->model->update($marca, $modelo, $precio, $id_categoria, $id);
-            $this->view->response("Product updated successfully ", 200);
+        if (!$this->authHelper->isLoggedIn()) {
+            $this->view->response("You are not logged in", 401);
         } else {
-            $this->view->response("Complete all the fields", 400);
+            $body = $this->getData();
+            if ($params != null) {
+                $id = $params[':ID'];
+                $product = $this->model->get($id);
+                if ($product) {
+                    $this->model->update($id, $body);
+                    $this->view->response("Product updated successfully ", 200);
+                } else {
+                    $this->view->response("Product id= $id not found", 400);
+                }
+            }
+        }
+    }
+
+    public function remove($params = null)
+    {
+        if (!$this->authHelper->isLoggedIn()) {
+            $this->view->response("You are not logged in", 401);
+        } else {
+            if ($params != null) {
+                $id = $params[':ID'];
+                $product = $this->model->get($id);
+                $this->model->delete($id);
+                if ($product) {
+                    $this->view->response($product, 200);
+                } else {
+                    $this->view->response("Product id= $id not found", 404);
+                }
+            } else {
+                $this->view->response("Missing parameters", 400);
+            }
         }
     }
 }
