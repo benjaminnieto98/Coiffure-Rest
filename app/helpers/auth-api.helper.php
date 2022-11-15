@@ -8,7 +8,7 @@ class AuthApiHelper{
     private $key;
 
     function __construct(){
-        $this->key = "Hola123ab";
+        $this->key = "123";
     }
 
     public function isLoggedIn(){
