@@ -1,35 +1,36 @@
 <?php
 
-require_once './app/models/userModel.php';
 require_once './app/views/api.view.php';
 require_once './app/helpers/auth-api.helper.php';
+require_once './app/models/UserModel.php';
 
-class UserApiController{
-    // private $model;
-    private $view; 
-    private $authHelper; 
+class UserApiController
+{
+    private $model;
+    private $view;
+    private $authHelper;
 
-    function __construct(){
-        //$this->model = new UserModel();
+    function __construct()
+    {
+        $this->model = new UserModel();
         $this->view = new ApiView();
         $this->authHelper = new AuthApiHelper();
     }
 
-    public function getToken(){
-        $userpass = $this->authHelper->getBasic();        
+    public function getToken()
+    {
+        $userpass = $this->authHelper->getBasic();
+        $user = $userpass["user"];
+        $pass = $userpass["pass"];
         //obtengo el usuario de la bbdd
-        //$user = $this->model->getUser($userName);
+        $userModel = $this->model->getUser($user);
 
-        $user = array("user"=>$userpass["user"]);
-
-        //if usuario existe y contrasena coincide
-        if(true /*$user && password_verify($password, $user->password)*/){
-            $token = $this->authHelper->createToken($user);
-            //devolver un token
-            $this->view->response(["token"=>$token], 200);
-        }
-        else{
-            $this->view->response("Wrong username or password", 401);
+        if ($userModel && password_verify($pass, $userModel->contraseña)) {
+            //     //  crear un token
+            $token = $this->authHelper->createToken($userModel);
+            $this->view->response('Token' . $token, 200);
+        } else {
+            $this->view->response('Wrong username or password', 401);
         }
     }
 
@@ -37,7 +38,8 @@ class UserApiController{
     {
         if ($params) {
             $id = $params[':ID'];
-            $user = $this->authApiHelper->getUser();
+            $user = $this->authHelper->getUser();
+            var_dump($user);
             if ($user) {
                 if ($id == $user->sub) {
                     $this->view->response($user, 200);

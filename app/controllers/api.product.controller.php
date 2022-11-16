@@ -115,7 +115,7 @@ class ApiProductController
         } else {
             $id = $this->model->insert($body);
             $product = $this->model->get($id);
-            $this->view->response($product, 201);
+            $this->view->response("Product created successfully" , 201);
         }
     }
 
@@ -130,7 +130,7 @@ class ApiProductController
                 $product = $this->model->get($id);
                 if ($product) {
                     $this->model->update($id, $body);
-                    $this->view->response("Product updated successfully ", 200);
+                    $this->view->response("Product updated successfully", 200);
                 } else {
                     $this->view->response("Product id= $id not found", 400);
                 }
@@ -148,7 +148,7 @@ class ApiProductController
                 $product = $this->model->get($id);
                 $this->model->delete($id);
                 if ($product) {
-                    $this->view->response($product, 200);
+                    $this->view->response("Product removed successfully", 200);
                 } else {
                     $this->view->response("Product id= $id not found", 404);
                 }
@@ -157,4 +157,5 @@ class ApiProductController
             }
         }
     }
+
 }
