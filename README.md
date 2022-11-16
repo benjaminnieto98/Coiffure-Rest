@@ -29,6 +29,9 @@ Los parametros disponibles son los siguientes:
 | /products/id | DELETE         | Borra el producto con el id especificado    |
 | /products/id | PUT            | Actualiza el producto con el id especificado    |
 
+- Tanto el PUT como el DELETE necesitan de un Token para poder realizarlos.
+
 ### DATOS DE AUTENTICACION
 user: benjaminnieto98@gmail.com
 password: 123
+ID = 1
